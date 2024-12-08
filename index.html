@@ -36,16 +36,6 @@
             margin: 10px;
             box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.5);
         }
-        h2 {
-            font-size: 30px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            background: linear-gradient(45deg, #ff00f7, #ff0037, #4800ff, #0095ff,#4800ff,#ff00f7,#e51a1a);       /* to select gradient colour*/
-            background-size: 400% 400%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradient-animation 20s ease infinite;
-        }
 
         .song-item {
             display: flex;
@@ -148,8 +138,12 @@
             color: white;
         }
 
-        .speed-control select {
-            background: rgba(0,  0, 0.8);
+        .speed-control label {
+            margin-right: 10px;
+        }
+
+ select {
+            background: rgba(0, 0, 0.8);
             color: white;
             border: none;
             padding: 5px;
@@ -160,7 +154,7 @@
 </head>
 <body>
     <div class="header">
-        <h2>Enhanced Music Player</h2>
+        <h2>AudioSphere</h2>
         <div class="speed-control">
             <label for="speed">Speed:</label>
             <select id="speed">
@@ -197,7 +191,8 @@
             <i class="fas fa-play" id="play-pause-btn"></i>
             <i class="fas fa-forward" id="next-btn"></i>
             <i class="fas fa-redo" id="repeat-btn"></i>
-            <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="1" style="width: 100px; margin-left: 20px;">
+            <i class="fas fa-volume-mute" id="mute-btn" style="cursor: pointer;"></i>
+            <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="1" style="width: 100px; margin-left: 10px;">
         </div>
     </div>
 
@@ -219,12 +214,14 @@
         const progressContainer = document.getElementById('progress-container');
         const progress = document.getElementById('progress');
         const speedControl = document.getElementById('speed');
+        const muteBtn = document.getElementById('mute-btn');
 
         let audio = new Audio();
         let songs = [];
         let currentIndex = 0;
         let isShuffle = false;
         let isRepeat = false;
+        let isMuted = false;
 
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const analyser = audioContext.createAnalyser();
@@ -241,12 +238,12 @@
                 songs = [];
                 loadingIndicator.style.display = 'block'; // Show loading indicator
                 for await (const entry of dirHandle.values()) {
-                    if (entry.kind === 'file' && (entry.name.endsWith('.mp3') || entry.name.endsWith('.wav') || entry.name.endsWith('.ogg'))) {
+                    if (entry.kind === 'file' && ( entry.name.endsWith('.mp3') || entry.name.endsWith('.wav') || entry.name.endsWith('.ogg'))) {
                         songs.push(entry);
                     }
                 }
                 loadingIndicator.style.display = 'none'; // Hide loading indicator
-                if (songs.length >  0) {
+                if (songs.length > 0) {
                     loadSongs();
                 } else {
                     document.getElementById('song-items-container').innerHTML = '<p>No audio files found in the selected folder.</p>';
@@ -272,7 +269,9 @@
                 songItem.addEventListener('click', () => playSong(index));
                 songItemsContainer.appendChild(songItem);
             });
-            playSong(0); // Optionally start with the first song
+            if (songs.length > 0) {
+                playSong(0); // Start with the first song
+            }
         }
 
         async function playSong(index) {
@@ -341,6 +340,11 @@
             }
         });
 
+        shuffleBtn.addEventListener('click', () => {
+            isShuffle = !isShuffle;
+            shuffleBtn.classList.toggle('active', isShuffle);
+        });
+
         repeatBtn.addEventListener('click', () => {
             isRepeat = !isRepeat;
             repeatBtn.classList.toggle('active', isRepeat);
@@ -374,6 +378,14 @@
         volumeSlider.addEventListener('input', (event) => {
             audio.volume = event.target.value;
             currentVolume.textContent = `Volume: ${Math.round(audio.volume * 100)}%`;
+        });
+
+        // Mute button functionality
+        muteBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            audio.muted = isMuted;
+            muteBtn.classList.toggle('fa-volume-mute', isMuted);
+            muteBtn.classList.toggle('fa-volume-up', !isMuted);
         });
 
         // Progress bar
